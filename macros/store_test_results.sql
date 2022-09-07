@@ -96,7 +96,7 @@
     - models come through as [['model'], ['model_b']]
     - srcs come through as [['source','table'], ['source_b','table_b']]
 */
-{% macro process_refs( ref_list, is_src=false ) %}
+{% macro dbt_store_test_results.process_refs( ref_list, is_src=false ) %}
   {% set refs = [] %}
 
   {% if ref_list is defined and ref_list|length > 0 %}
