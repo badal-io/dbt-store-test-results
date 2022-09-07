@@ -47,8 +47,8 @@
       '{{ test_name }}' as test_name,
       '{{ result.node.config.severity }}' as test_severity_config,
       '{{ result.status }}' as test_result,
-      '{{ process_refs(result.node.refs) }}' as model_refs,
-      '{{ process_refs(result.node.sources, is_src=true) }}' as source_refs,
+      '{{ dbt_store_test_results.process_refs(result.node.refs) }}' as model_refs,
+      '{{ dbt_store_test_results.process_refs(result.node.sources, is_src=true) }}' as source_refs,
       '{{ column_name|escape }}' as column_names,
       '{{ result.node.name }}' as test_name_long,
       '{{ test_type }}' as test_type,
@@ -96,7 +96,7 @@
     - models come through as [['model'], ['model_b']]
     - srcs come through as [['source','table'], ['source_b','table_b']]
 */
-{% macro dbt_store_test_results.process_refs( ref_list, is_src=false ) %}
+{% macro process_refs( ref_list, is_src=false ) %}
   {% set refs = [] %}
 
   {% if ref_list is defined and ref_list|length > 0 %}
