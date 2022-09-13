@@ -58,7 +58,8 @@
       '{{ var("pipeline_type", "variable_not_set") }}' as pipeline_type,
       '{{ target.name }}' as dbt_cloud_target_name,
       ARRAY<string>{{ result.node.tags }} as tags,
-      current_timestamp as _timestamp
+      current_timestamp as _timestamp,
+      (SELECT count(*) FROM `{{ schemas[0] }}.{{ result.node.alias }}`) as rows_failed
     {{ "union all" if not loop.last }}
 
   {%- endfor %}
