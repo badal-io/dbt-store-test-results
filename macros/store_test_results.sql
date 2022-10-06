@@ -59,7 +59,16 @@
       '{{ target.name }}' as dbt_cloud_target_name,
       ARRAY<string>{{ result.node.tags }} as tags,
       current_timestamp as _timestamp,
-      {{ 0 if result.failures is none else result.failures }} as rows_failed
+      {{ 0 if result.failures is none else result.failures }} as rows_failed,
+      {%- if result.node.refs|length == 1 -%}
+        {%- if result.node.config.where -%}
+          (SELECT count(*) FROM {{ result.node.refs[0][0] }} WHERE {{ result.node.config.where }})
+        {%- else -%}
+          (SELECT count(*) FROM {{ result.node.refs[0][0] }})
+        {%- endif %}
+      {%- else -%}
+          0
+      {%- endif %} as rows_total
     {{ "union all" if not loop.last }}
 
   {%- endfor %}
