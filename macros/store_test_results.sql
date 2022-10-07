@@ -4,6 +4,26 @@
   --add "{{ store_test_results(results) }}" to an on-run-end: block in dbt_project.yml
   --The next v.1.0.X release of dbt will include post run hooks for dbt test!
 */
+
+/*
+coming from
+https://github.com/brooklyn-data/dbt_artifacts/blob/781a8f8d028dbb2e88daa1c8bbc80679f1c754ec/macros/upload_results.sql#L2
+*/
+{% macro get_relation(get_relation_name) %}
+    {% if execute %}
+        {% set model_get_relation_node = graph.nodes.values() | selectattr('name', 'equalto', get_relation_name) | first %}
+        {% set relation = api.Relation.create(
+            database = model_get_relation_node.database,
+            schema = model_get_relation_node.schema,
+            identifier = model_get_relation_node.alias
+        )
+        %}
+        {% do return(relation) %}
+    {% else %}
+        {% do return(api.Relation.create()) %}
+    {% endif %}
+{% endmacro %}
+
 {% macro store_test_results(results) %}
   {%- set test_results = [] -%}
 
@@ -62,9 +82,15 @@
       {{ 0 if result.failures is none else result.failures }} as rows_failed,
       {%- if result.node.refs|length == 1 -%}
         {%- if result.node.config.where -%}
-          (SELECT count(*) FROM {{ result.node.refs[0][0] }} WHERE {{ result.node.config.where }})
+          (SELECT count(*) FROM {{ dbt_store_test_results.get_relation(result.node.refs[0][0]) }} WHERE {{ result.node.config.where }})
         {%- else -%}
-          (SELECT count(*) FROM {{ result.node.refs[0][0] }})
+          (SELECT count(*) FROM {{ dbt_store_test_results.get_relation(result.node.refs[0][0]) }})
+        {%- endif %}
+      {%- elif result.node.sources|length == 1 -%}
+        {%- if result.node.config.where -%}
+          (SELECT count(*) FROM {{ source(result.node.sources[0][0], result.node.sources[0][1]) }} WHERE {{ result.node.config.where }})
+        {%- else -%}
+          (SELECT count(*) FROM {{ source(result.node.sources[0][0], result.node.sources[0][1]) }})
         {%- endif %}
       {%- else -%}
           0
